@@ -12,7 +12,7 @@ def capture_systeminfo_and_close(gui_instance=None):
     """Systeminfo 실행, 캡쳐, 창 닫기를 한 번에 처리"""
     # CMD 창 열고 systeminfo 실행
     subprocess.Popen('C:\\Windows\\System32\\cmd.exe /c start /max C:\\Windows\\System32\\cmd.exe /k systeminfo', shell=False)
-    time.sleep(3)  # systeminfo 로딩 대기 (5초에서 3초로 단축)
+    time.sleep(5)  # systeminfo 로딩 대기 (5초)
     
     # 스크린샷 캡쳐
     if gui_instance: gui_instance.hide_overlay()
