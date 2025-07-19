@@ -280,7 +280,7 @@ def capture_shared_folders_and_close(gui_instance=None):
     """공유폴더 확인, 캡쳐, 창 닫기를 한 번에 처리"""
     cmd_command = f'{CMD_PATH} /c start /max {CMD_PATH} /k "net share"'
     subprocess.Popen(cmd_command, shell=False)
-    time.sleep(2)
+    time.sleep(3)
     
     if gui_instance: gui_instance.hide_overlay()
     screenshot = pyautogui.screenshot()
