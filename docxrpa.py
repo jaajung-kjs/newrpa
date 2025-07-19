@@ -1,12 +1,6 @@
-import flet as ft
-import pyautogui
 from docx import Document
 from docx.shared import Inches, Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.oxml.ns import qn
-from docx.oxml import OxmlElement
-import os
-import datetime
 import io
 
 def create_base_report_document():
@@ -85,75 +79,4 @@ def insert_image_to_document_table(document, image_object, row, col, width=Inche
     paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER # 이미지 포함 단락 가운데 정렬
 
 
-def run_rpa(page: ft.Page, status_text: ft.Text, start_button: ft.ElevatedButton):
-    status_text.value = "점검중입니다. 아무것도 건드리지 마세요..."
-    status_text.color = "red"
-    start_button.disabled = True
-    page.update() # UI 업데이트 강제
-
-    try:
-        # 스크린샷 캡처 로직은 main.py에서 처리
-
-        # docx 문서 생성
-        document = create_base_report_document()
-        
-        # 임시 스크린샷을 삽입하여 테스트 (main.py 통합 시 제거)
-        # script_dir = os.path.dirname(os.path.abspath(__file__))
-        # temp_screenshot_path = os.path.join(script_dir, "temp_screenshot.png")
-        # pyautogui.screenshot(temp_screenshot_path)
-        # insert_image_to_document_table(document, temp_screenshot_path, 1, 0) # 예시로 1행 0열에 삽입
-        # os.remove(temp_screenshot_path) # 임시 파일 삭제
-
-        # 3. docx 파일 저장
-        output_filename = f"노트북_점검_보고서_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.docx"
-        document.save(output_filename)
-        print(f"문서 저장: {output_filename}")
-
-        status_text.value = f"점검 완료! 보고서가 '{output_filename}'(으)로 저장되었습니다."
-        status_text.color = "green"
-        page.update()
-
-        def close_dialog(e):
-            page.dialog.open = False
-            page.update()
-
-        page.dialog = ft.AlertDialog(title=ft.Text("완료"), content=ft.Text(f"노트북 점검이 완료되었습니다.\n보고서: {output_filename}"), actions=[ft.TextButton("확인", on_click=close_dialog)])
-        page.dialog.open = True
-        page.update()
-
-    except Exception as e:
-        status_text.value = f"오류 발생: {e}"
-        status_text.color = "red"
-        page.update()
-
-        def close_dialog(e):
-            page.dialog.open = False
-            page.update()
-
-        page.dialog = ft.AlertDialog(title=ft.Text("오류"), content=ft.Text(f"점검 중 오류가 발생했습니다: {e}"), actions=[ft.TextButton("확인", on_click=close_dialog)])
-        page.dialog.open = True
-        page.update()
-    finally:
-        start_button.disabled = False
-        page.update()
-
-async def main(page: ft.Page):
-    page.title = "노트북 일괄 점검 RPA"
-    page.vertical_alignment = ft.MainAxisAlignment.CENTER
-    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-    page.window_width = 400
-    page.window_height = 200
-    page.window_resizable = False
-
-    title_text = ft.Text("노트북 점검 프로그램", size=20, weight=ft.FontWeight.BOLD)
-    status_text = ft.Text("시작하려면 버튼을 클릭하세요.", size=12, color="blue")
-    start_button = ft.ElevatedButton("노트북 점검 DOCX 생성", on_click=lambda e: page.run_thread(run_rpa, page, status_text, start_button))
-
-    page.add(
-        title_text,
-        status_text,
-        start_button,
-    )
-
-if __name__ == "__main__":
-    ft.app(target=main)
+# main.py에서만 사용하는 함수들이므로 flet 관련 코드는 제거됨
