@@ -26,21 +26,13 @@ def create_base_report_document():
     table.columns[0].width = Inches(3.2)
     table.columns[1].width = Inches(3.2)
 
+    # 테이블 스타일 설정 (기본 테두리 있는 스타일 사용)
+    table.style = 'Table Grid'
+    
     # 모든 셀의 내용을 가운데 정렬
     for row in table.rows:
         for cell in row.cells:
             cell.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
-            # 셀 테두리 설정 (모든 방향)
-            tcPr = cell._tc.get_or_add_tcPr()
-            tcBorders = OxmlElement('w:tcBorders')
-            for border_name in ('top', 'left', 'bottom', 'right'):
-                border = OxmlElement(f'w:{border_name}')
-                border.set(qn('w:val'), 'single')
-                border.set(qn('w:sz'), '4') # 테두리 두께 (1/8 포인트 단위)
-                border.set(qn('w:space'), '0')
-                border.set(qn('w:color'), 'auto')
-                tcBorders.append(border)
-            tcPr.append(tcBorders)
 
     # 3. 표 내용 채우기
     check_items = [
