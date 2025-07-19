@@ -1,0 +1,35 @@
+# 생성된 보고서 파일들
+*.docx
+
+# Python 캐시 파일들
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# 가상환경
+venv/
+env/
+ENV/
+
+# IDE 파일들
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS 관련 파일들
+.DS_Store
+Thumbs.db
+
+# 임시 파일들
+*.tmp
+*.temp
+
+# 백업 파일들
+*_backup.py
+*_optimized.py
+
+# 기타 임시 설치 파일들
+=*
