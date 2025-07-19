@@ -5,14 +5,46 @@ import pyautogui
 from datetime import datetime
 from tkinter import Tk, Button, Label, Toplevel, messagebox
 import threading
+import os
+import sys
 
 # docxrpa.py에서 필요한 함수는 나중에 임포트 (지연 로딩)
+
+def get_system_paths():
+    """시스템 경로들을 동적으로 찾기"""
+    # Windows 시스템 디렉토리 (보통 C:\Windows\System32)
+    system32_dir = os.environ.get('SYSTEMROOT', 'C:\\Windows') + '\\System32'
+    cmd_path = os.path.join(system32_dir, 'cmd.exe')
+    
+    # V3 경로 찾기 (여러 가능한 위치 시도)
+    v3_possible_paths = [
+        r'C:\Program Files\AhnLab\V3Lite40\v3lite4.exe',
+        r'C:\Program Files (x86)\AhnLab\V3Lite40\v3lite4.exe',
+        r'C:\Program Files\AhnLab\V3Lite\v3lite4.exe',
+        r'C:\Program Files (x86)\AhnLab\V3Lite\v3lite4.exe'
+    ]
+    
+    v3_path = None
+    for path in v3_possible_paths:
+        if os.path.exists(path):
+            v3_path = path
+            break
+    
+    return {
+        'cmd': cmd_path,
+        'v3': v3_path
+    }
+
+# 시스템 경로 초기화
+SYSTEM_PATHS = get_system_paths()
+CMD_PATH = SYSTEM_PATHS['cmd']
 
 def capture_systeminfo_and_close(gui_instance=None):
     """Systeminfo 실행, 캡쳐, 창 닫기를 한 번에 처리"""
     # CMD 창 열고 systeminfo 실행
-    subprocess.Popen('C:\\Windows\\System32\\cmd.exe /c start /max C:\\Windows\\System32\\cmd.exe /k systeminfo', shell=False)
-    time.sleep(5)  # systeminfo 로딩 대기 (5초)
+    cmd_command = f'{CMD_PATH} /c start /max {CMD_PATH} /k systeminfo'
+    subprocess.Popen(cmd_command, shell=False)
+    time.sleep(7)  # systeminfo 로딩 대기 (7초)
     
     # 스크린샷 캡쳐
     if gui_instance: gui_instance.hide_overlay()
@@ -20,7 +52,7 @@ def capture_systeminfo_and_close(gui_instance=None):
     if gui_instance: gui_instance.show_overlay()
     
     # CMD 창 닫기
-    windows = gw.getWindowsWithTitle('C:\\Windows\\System32\\cmd.exe')
+    windows = gw.getWindowsWithTitle(CMD_PATH)
     for window in windows:
         try:
             window.close()
@@ -32,14 +64,15 @@ def capture_systeminfo_and_close(gui_instance=None):
 
 def capture_mac_address_and_close(gui_instance=None):
     """MAC 주소 확인, 캡쳐, 창 닫기를 한 번에 처리"""
-    subprocess.Popen('C:\\Windows\\System32\\cmd.exe /c start /max C:\\Windows\\System32\\cmd.exe /k "ipconfig /all | more"', shell=False)
+    cmd_command = f'{CMD_PATH} /c start /max {CMD_PATH} /k "ipconfig /all | more"'
+    subprocess.Popen(cmd_command, shell=False)
     time.sleep(3)
     
     if gui_instance: gui_instance.hide_overlay()
     screenshot = pyautogui.screenshot()
     if gui_instance: gui_instance.show_overlay()
     
-    windows = gw.getWindowsWithTitle('C:\\Windows\\System32\\cmd.exe')
+    windows = gw.getWindowsWithTitle(CMD_PATH)
     for window in windows:
         try:
             window.close()
@@ -51,7 +84,7 @@ def capture_mac_address_and_close(gui_instance=None):
 
 def capture_screensaver_and_close(gui_instance=None):
     """화면 보호기 설정 열기, 캡쳐, 창 닫기를 한 번에 처리"""
-    subprocess.Popen(['C:\\Windows\\System32\\cmd.exe', '/c', 'control', 'desk.cpl,,@screensaver'])
+    subprocess.Popen([CMD_PATH, '/c', 'control', 'desk.cpl,,@screensaver'])
     time.sleep(2)
     
     # 한글 또는 영문 창 찾기
@@ -79,7 +112,14 @@ def capture_screensaver_and_close(gui_instance=None):
 def v3_lite_capture_and_close(gui_instance=None, mode="main"):
     """V3 Lite 실행, 특정 작업 수행, 캡쳐, 창 닫기를 한 번에 처리"""
     # V3 실행
-    subprocess.Popen(['C:\\Windows\\System32\\cmd.exe', '/c', r'C:\Program Files\AhnLab\V3Lite40\v3lite4.exe'])
+    v3_path = SYSTEM_PATHS['v3']
+    if not v3_path:
+        print("V3 Lite를 찾을 수 없습니다. 다음 경로들을 확인하세요:")
+        print("- C:\\Program Files\\AhnLab\\V3Lite40\\v3lite4.exe")
+        print("- C:\\Program Files (x86)\\AhnLab\\V3Lite40\\v3lite4.exe")
+        return None
+    
+    subprocess.Popen([CMD_PATH, '/c', v3_path])
     time.sleep(3)
     
     # 모드별 작업 수행
@@ -207,7 +247,7 @@ def capture_desktop(gui_instance=None):
 
 def capture_programs_list(gui_instance=None):
     """프로그램 추가/제거 열기, 캡쳐"""
-    subprocess.Popen(['C:\\Windows\\System32\\cmd.exe', '/c', 'control', 'appwiz.cpl'])
+    subprocess.Popen([CMD_PATH, '/c', 'control', 'appwiz.cpl'])
     time.sleep(3)
     
     # 창 최대화
@@ -238,7 +278,8 @@ def capture_programs_list(gui_instance=None):
 
 def capture_shared_folders_and_close(gui_instance=None):
     """공유폴더 확인, 캡쳐, 창 닫기를 한 번에 처리"""
-    subprocess.Popen('C:\\Windows\\System32\\cmd.exe /c start /max C:\\Windows\\System32\\cmd.exe /k "net share"', shell=False)
+    cmd_command = f'{CMD_PATH} /c start /max {CMD_PATH} /k "net share"'
+    subprocess.Popen(cmd_command, shell=False)
     time.sleep(2)
     
     if gui_instance: gui_instance.hide_overlay()
@@ -246,7 +287,7 @@ def capture_shared_folders_and_close(gui_instance=None):
     if gui_instance: gui_instance.show_overlay()
     
     # CMD 창 닫기
-    windows = gw.getWindowsWithTitle('C:\\Windows\\System32\\cmd.exe')
+    windows = gw.getWindowsWithTitle(CMD_PATH)
     for window in windows:
         try:
             window.close()
