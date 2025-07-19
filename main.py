@@ -6,14 +6,13 @@ from datetime import datetime
 from tkinter import Tk, Button, Label, Toplevel, messagebox
 import threading
 
-# docxrpa.py에서 필요한 함수 임포트
-from docxrpa import create_base_report_document, insert_image_to_document_table
+# docxrpa.py에서 필요한 함수는 나중에 임포트 (지연 로딩)
 
 def capture_systeminfo_and_close(gui_instance=None):
     """Systeminfo 실행, 캡쳐, 창 닫기를 한 번에 처리"""
     # CMD 창 열고 systeminfo 실행
     subprocess.Popen('C:\\Windows\\System32\\cmd.exe /c start /max C:\\Windows\\System32\\cmd.exe /k systeminfo', shell=False)
-    time.sleep(5)  # systeminfo 로딩 대기
+    time.sleep(3)  # systeminfo 로딩 대기 (5초에서 3초로 단축)
     
     # 스크린샷 캡쳐
     if gui_instance: gui_instance.hide_overlay()
@@ -133,10 +132,10 @@ def v3_lite_capture_and_close(gui_instance=None, mode="main"):
         screenshot = pyautogui.screenshot(region=(left, top, width, height))
         if gui_instance: gui_instance.show_overlay()
         
-        # V3 창이 닫힐 때까지 Alt+F4 반복
+        # V3 창이 닫힐 때까지 Alt+F4 반복 (개선된 버전)
         print("V3 종료 시도 중...")
         close_attempts = 0
-        max_attempts = 10
+        max_attempts = 8
         
         while close_attempts < max_attempts:
             # V3 창이 있는지 확인
@@ -148,33 +147,51 @@ def v3_lite_capture_and_close(gui_instance=None, mode="main"):
             # V3 창을 정확히 활성화하고 Alt+F4
             try:
                 v3_window = v3_windows[0]
+                print(f"V3 창 닫기 시도 {close_attempts + 1}/{max_attempts}")
+                
+                # 창 활성화 전에 잠시 대기
+                time.sleep(0.2)
                 v3_window.activate()
-                time.sleep(0.3)  # 창이 활성화될 시간 대기
+                time.sleep(0.5)  # 창 활성화 대기 시간 증가
                 
                 # 활성 창이 V3인지 다시 확인
                 active_window = gw.getActiveWindow()
                 if active_window and 'AhnLab V3 Lite' in active_window.title:
+                    print("V3 창이 활성화됨, Alt+F4 전송")
                     pyautogui.hotkey('alt', 'f4')
-                    time.sleep(0.5)
+                    time.sleep(0.8)  # Alt+F4 후 대기 시간 증가
                     
-                    # 종료 확인 대화상자가 있을 수 있으므로 Enter
-                    pyautogui.press('enter')
-                    time.sleep(0.5)
+                    # 종료 확인 대화상자가 있을 수 있으므로 Enter (조건부)
+                    remaining_windows = gw.getWindowsWithTitle('AhnLab V3 Lite')
+                    if remaining_windows:  # 아직 창이 있으면 Enter 눌러서 확인
+                        pyautogui.press('enter')
+                        time.sleep(0.5)
                 else:
                     print("V3 창 활성화 실패, 재시도...")
+                    time.sleep(0.3)
             except Exception as e:
                 print(f"V3 창 닫기 오류: {e}")
+                time.sleep(0.5)
             
             close_attempts += 1
         
-        if close_attempts >= max_attempts:
-            print(f"V3 창 닫기 시도 {max_attempts}회 초과")
+        # 최종 확인 및 강제 정리
+        final_v3_windows = gw.getWindowsWithTitle('AhnLab V3 Lite')
+        if final_v3_windows:
+            print(f"V3 창 닫기 시도 {max_attempts}회 후에도 창이 남아있음")
+        else:
+            print("V3 창 닫기 완료")
+        
+        # 키보드 상태 정리 (혹시 키가 눌린 상태로 남아있을 수 있음)
+        pyautogui.press('esc')
+        time.sleep(0.2)
         
         print(f"V3 Lite {mode} 캡쳐 완료 및 창 닫기")
         return screenshot
     else:
         print("V3 Lite 창을 찾을 수 없습니다.")
         return None
+
 
 def capture_desktop(gui_instance=None):
     """바탕화면 보기 및 캡쳐"""
@@ -219,6 +236,58 @@ def capture_programs_list(gui_instance=None):
     print("프로그램 추가/제거 캡쳐 완료")
     return screenshot
 
+def capture_shared_folders_and_close(gui_instance=None):
+    """공유폴더 확인, 캡쳐, 창 닫기를 한 번에 처리"""
+    subprocess.Popen('C:\\Windows\\System32\\cmd.exe /c start /max C:\\Windows\\System32\\cmd.exe /k "net share"', shell=False)
+    time.sleep(2)
+    
+    if gui_instance: gui_instance.hide_overlay()
+    screenshot = pyautogui.screenshot()
+    if gui_instance: gui_instance.show_overlay()
+    
+    # CMD 창 닫기
+    windows = gw.getWindowsWithTitle('C:\\Windows\\System32\\cmd.exe')
+    for window in windows:
+        try:
+            window.close()
+        except:
+            pass
+    
+    print("공유폴더 삭제 확인 캡쳐 완료")
+    return screenshot
+
+def capture_system_tray_icons(gui_instance=None):
+    """시스템 트레이 숨겨진 아이콘 표시 및 캡쳐 (오른쪽 하단 영역만)"""
+    # Win + B로 시스템 트레이로 포커스 이동
+    pyautogui.hotkey('win', 'b')
+    time.sleep(0.5)
+    
+    # Enter로 숨겨진 아이콘 펼치기
+    pyautogui.press('enter')
+    time.sleep(0.5)
+    
+    # 화면 해상도 확인 후 오른쪽 하단 영역만 캡쳐
+    screen_width, screen_height = pyautogui.size()
+    
+    # 오른쪽 하단 500x500 영역 캡쳐 (시스템 트레이 영역)
+    tray_width = 500
+    tray_height = 500
+    left = screen_width - tray_width
+    top = screen_height - tray_height
+    
+    print(f"시스템 트레이 영역 캡쳐: {tray_width}x{tray_height} at ({left}, {top})")
+    
+    if gui_instance: gui_instance.hide_overlay()
+    screenshot = pyautogui.screenshot(region=(left, top, tray_width, tray_height))
+    if gui_instance: gui_instance.show_overlay()
+    
+    # ESC로 닫기
+    pyautogui.press('esc')
+    time.sleep(0.3)
+    
+    print("필수 보안 프로그램 설치 여부 캡쳐 완료")
+    return screenshot
+
 def run_rpa_tasks(update_progress_callback, gui_instance):
     """RPA 작업 실행"""
     captured_images = {}
@@ -226,9 +295,11 @@ def run_rpa_tasks(update_progress_callback, gui_instance):
     
     # 작업 목록 - 통합된 함수들 사용
     tasks = [
+        {"name": "공유폴더 삭제 확인", "func": capture_shared_folders_and_close, "row": 1, "col": 0},
         {"name": "Systeminfo 캡쳐", "func": capture_systeminfo_and_close, "row": 3, "col": 0},
         {"name": "MAC 주소 캡쳐", "func": capture_mac_address_and_close, "row": 3, "col": 1},
         {"name": "화면 보호기 설정 캡쳐", "func": capture_screensaver_and_close, "row": 7, "col": 0},
+        {"name": "필수 보안 프로그램 설치 여부", "func": capture_system_tray_icons, "row": 11, "col": 1},
         {"name": "V3 Lite 실행 및 캡쳐", "func": lambda g: v3_lite_capture_and_close(g, "main"), "row": 9, "col": 1},
         {"name": "V3 검사 실행 및 캡쳐", "func": lambda g: v3_lite_capture_and_close(g, "check"), "row": 13, "col": 0},
         {"name": "V3 로그 캡쳐", "func": lambda g: v3_lite_capture_and_close(g, "log"), "row": 17, "col": 0},
@@ -243,6 +314,8 @@ def run_rpa_tasks(update_progress_callback, gui_instance):
     for i, task in enumerate(tasks):
         step_num = i + 1
         task_name = task["name"]
+        print(f"=== 작업 {step_num}/{total_tasks} 시작: {task_name} ===")
+        task_start_time = time.time()
         update_progress_callback(f"({step_num}/{total_tasks}) {task_name} 진행 중...")
         
         result = {"name": task_name, "status": "실패", "error": None}
@@ -256,13 +329,20 @@ def run_rpa_tasks(update_progress_callback, gui_instance):
             result["error"] = str(e)
             print(f"Error during {task_name}: {e}")
         
+        task_end_time = time.time()
+        print(f"{task_name} 완료 (소요시간: {task_end_time - task_start_time:.2f}초)")
         gui_instance.task_results.append(result)
-        time.sleep(0.5)
+        
+        if i < len(tasks) - 1:  # 마지막 작업이 아니면 대기
+            time.sleep(2.0)  # 작업간 텀을 2초로 설정
     
-    # 문서 생성 및 저장
+    # 문서 생성 및 저장 (지연 로딩으로 임포트)
     update_progress_callback("문서 생성 중...")
     print("문서 생성 시작...")
     start_time = time.time()
+    
+    # 문서 생성이 필요할 때만 docxrpa 모듈 임포트
+    from docxrpa import create_base_report_document, insert_image_to_document_table
     
     document = create_base_report_document()
     for (row, col), image in captured_images.items():
