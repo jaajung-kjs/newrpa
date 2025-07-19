@@ -1,0 +1,6 @@
+pygetwindow==0.0.9
+pyautogui==0.9.54
+pywinauto==0.6.8
+python-docx==1.1.2
+flet==0.24.1
+Pillow>=10.0.0
