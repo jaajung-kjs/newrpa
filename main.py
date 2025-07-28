@@ -18,6 +18,10 @@ def get_system_paths():
     
     # V3 경로 찾기 (여러 가능한 위치 시도)
     v3_possible_paths = [
+        r'C:\Program Files\AhnLab\V3IS90\V3UI.exe',
+        r'C:\Program Files (x86)\AhnLab\V3IS90\V3UI.exe',
+        r'C:\Program Files\AhnLab\V3IS80\V3UI.exe',
+        r'C:\Program Files (x86)\AhnLab\V3IS80\V3UI.exe',
         r'C:\Program Files\AhnLab\V3Lite40\v3lite4.exe',
         r'C:\Program Files (x86)\AhnLab\V3Lite40\v3lite4.exe',
         r'C:\Program Files\AhnLab\V3Lite\v3lite4.exe',
@@ -44,7 +48,7 @@ def capture_systeminfo_and_close(gui_instance=None):
     # CMD 창 열고 systeminfo 실행
     cmd_command = f'{CMD_PATH} /c start /max {CMD_PATH} /k systeminfo'
     subprocess.Popen(cmd_command, shell=False)
-    time.sleep(7)  # systeminfo 로딩 대기 (7초)
+    time.sleep(10)  # systeminfo 로딩 대기 (10초)
     
     # 스크린샷 캡쳐
     if gui_instance: gui_instance.hide_overlay()
@@ -66,7 +70,7 @@ def capture_mac_address_and_close(gui_instance=None):
     """MAC 주소 확인, 캡쳐, 창 닫기를 한 번에 처리"""
     cmd_command = f'{CMD_PATH} /c start /max {CMD_PATH} /k "ipconfig /all | more"'
     subprocess.Popen(cmd_command, shell=False)
-    time.sleep(3)
+    time.sleep(5)
     
     if gui_instance: gui_instance.hide_overlay()
     screenshot = pyautogui.screenshot()
@@ -114,9 +118,11 @@ def v3_lite_capture_and_close(gui_instance=None, mode="main"):
     # V3 실행
     v3_path = SYSTEM_PATHS['v3']
     if not v3_path:
-        print("V3 Lite를 찾을 수 없습니다. 다음 경로들을 확인하세요:")
+        print("V3를 찾을 수 없습니다. 다음 경로들을 확인하세요:")
+        print("- C:\\Program Files\\AhnLab\\V3IS90\\V3UI.exe")
+        print("- C:\\Program Files (x86)\\AhnLab\\V3IS90\\V3UI.exe")
+        print("- C:\\Program Files\\AhnLab\\V3IS80\\V3UI.exe")
         print("- C:\\Program Files\\AhnLab\\V3Lite40\\v3lite4.exe")
-        print("- C:\\Program Files (x86)\\AhnLab\\V3Lite40\\v3lite4.exe")
         return None
     
     subprocess.Popen([CMD_PATH, '/c', v3_path])
@@ -158,8 +164,12 @@ def v3_lite_capture_and_close(gui_instance=None, mode="main"):
         pyautogui.press('space')
         time.sleep(3)
     
-    # 창 찾기 및 캡쳐
-    windows = gw.getWindowsWithTitle('AhnLab V3 Lite')
+    # 창 찾기 및 캡쳐 (V3IS90, V3 Lite 등 다양한 버전 지원)
+    windows = gw.getWindowsWithTitle('AhnLab V3')
+    if not windows:
+        windows = gw.getWindowsWithTitle('V3')
+    if not windows:
+        windows = gw.getWindowsWithTitle('AhnLab V3 Lite')
     if windows:
         window = windows[0]
         window.activate()
@@ -179,7 +189,11 @@ def v3_lite_capture_and_close(gui_instance=None, mode="main"):
         
         while close_attempts < max_attempts:
             # V3 창이 있는지 확인
-            v3_windows = gw.getWindowsWithTitle('AhnLab V3 Lite')
+            v3_windows = gw.getWindowsWithTitle('AhnLab V3')
+            if not v3_windows:
+                v3_windows = gw.getWindowsWithTitle('V3')
+            if not v3_windows:
+                v3_windows = gw.getWindowsWithTitle('AhnLab V3 Lite')
             if not v3_windows:
                 print("V3 창이 완전히 닫혔습니다.")
                 break
@@ -196,13 +210,17 @@ def v3_lite_capture_and_close(gui_instance=None, mode="main"):
                 
                 # 활성 창이 V3인지 다시 확인
                 active_window = gw.getActiveWindow()
-                if active_window and 'AhnLab V3 Lite' in active_window.title:
+                if active_window and ('AhnLab V3' in active_window.title or 'V3' in active_window.title):
                     print("V3 창이 활성화됨, Alt+F4 전송")
                     pyautogui.hotkey('alt', 'f4')
                     time.sleep(0.8)  # Alt+F4 후 대기 시간 증가
                     
                     # 종료 확인 대화상자가 있을 수 있으므로 Enter (조건부)
-                    remaining_windows = gw.getWindowsWithTitle('AhnLab V3 Lite')
+                    remaining_windows = gw.getWindowsWithTitle('AhnLab V3')
+                    if not remaining_windows:
+                        remaining_windows = gw.getWindowsWithTitle('V3')
+                    if not remaining_windows:
+                        remaining_windows = gw.getWindowsWithTitle('AhnLab V3 Lite')
                     if remaining_windows:  # 아직 창이 있으면 Enter 눌러서 확인
                         pyautogui.press('enter')
                         time.sleep(0.5)
@@ -216,7 +234,11 @@ def v3_lite_capture_and_close(gui_instance=None, mode="main"):
             close_attempts += 1
         
         # 최종 확인 및 강제 정리
-        final_v3_windows = gw.getWindowsWithTitle('AhnLab V3 Lite')
+        final_v3_windows = gw.getWindowsWithTitle('AhnLab V3')
+        if not final_v3_windows:
+            final_v3_windows = gw.getWindowsWithTitle('V3')
+        if not final_v3_windows:
+            final_v3_windows = gw.getWindowsWithTitle('AhnLab V3 Lite')
         if final_v3_windows:
             print(f"V3 창 닫기 시도 {max_attempts}회 후에도 창이 남아있음")
         else:
@@ -280,7 +302,7 @@ def capture_shared_folders_and_close(gui_instance=None):
     """공유폴더 확인, 캡쳐, 창 닫기를 한 번에 처리"""
     cmd_command = f'{CMD_PATH} /c start /max {CMD_PATH} /k "net share"'
     subprocess.Popen(cmd_command, shell=False)
-    time.sleep(3)
+    time.sleep(5)
     
     if gui_instance: gui_instance.hide_overlay()
     screenshot = pyautogui.screenshot()
