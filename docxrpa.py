@@ -1,7 +1,28 @@
+# -*- coding: utf-8 -*-
 from docx import Document
 from docx.shared import Inches, Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.oxml.shared import OxmlElement, qn
 import io
+
+def set_korean_font(run, font_name='맑은 고딕'):
+    """한글 폰트를 설정하는 함수"""
+    r = run._element
+    rPr = r.rPr
+    if rPr is None:
+        rPr = OxmlElement('w:rPr')
+        r.insert(0, rPr)
+    
+    # ASCII 폰트 설정
+    rFonts = rPr.find(qn('w:rFonts'))
+    if rFonts is None:
+        rFonts = OxmlElement('w:rFonts')
+        rPr.append(rFonts)
+    
+    rFonts.set(qn('w:ascii'), font_name)
+    rFonts.set(qn('w:hAnsi'), font_name)
+    rFonts.set(qn('w:eastAsia'), font_name)  # 한글 폰트 설정
+    rFonts.set(qn('w:cs'), font_name)
 
 def create_base_report_document():
     document = Document()
@@ -11,6 +32,7 @@ def create_base_report_document():
     title_run = title_paragraph.add_run('공용노트북 보안점검 증빙사진')
     title_run.font.size = Pt(20)
     title_run.bold = True
+    set_korean_font(title_run, '맑은 고딕')  # 한글 폰트 설정
     title_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
     # 2. 2x18 테이블 생성
@@ -23,7 +45,7 @@ def create_base_report_document():
     # 테이블 스타일 설정 (기본 테두리 있는 스타일 사용)
     table.style = 'Table Grid'
     
-    # 모든 셀의 내용을 가운데 정렬
+    # 모든 셀의 내용을 가운데 정렬하고 한글 폰트 설정
     for row in table.rows:
         for cell in row.cells:
             cell.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -41,19 +63,18 @@ def create_base_report_document():
     for i in range(18): # 0부터 17까지 모든 행 반복
         if i % 2 == 0: # 짝수 인덱스 행 (0, 2, 4, ...)에 번호와 항목 채우기
             if current_item_index < len(check_items):
-                table.cell(i, 0).paragraphs[0].text = f'{current_item_index + 1}. {check_items[current_item_index]}'
+                cell_paragraph = table.cell(i, 0).paragraphs[0]
+                cell_run = cell_paragraph.runs[0] if cell_paragraph.runs else cell_paragraph.add_run()
+                cell_run.text = f'{current_item_index + 1}. {check_items[current_item_index]}'
+                set_korean_font(cell_run, '맑은 고딕')  # 한글 폰트 설정
                 current_item_index += 1
-            else:
-                table.cell(i, 0).paragraphs[0].text = ''
 
             if current_item_index < len(check_items):
-                table.cell(i, 1).paragraphs[0].text = f'{current_item_index + 1}. {check_items[current_item_index]}'
+                cell_paragraph = table.cell(i, 1).paragraphs[0]
+                cell_run = cell_paragraph.runs[0] if cell_paragraph.runs else cell_paragraph.add_run()
+                cell_run.text = f'{current_item_index + 1}. {check_items[current_item_index]}'
+                set_korean_font(cell_run, '맑은 고딕')  # 한글 폰트 설정
                 current_item_index += 1
-            else:
-                table.cell(i, 1).paragraphs[0].text = ''
-        else: # 홀수 인덱스 행 (1, 3, 5, ...)은 사진을 위해 비워두기
-            table.cell(i, 0).paragraphs[0].text = ''
-            table.cell(i, 1).paragraphs[0].text = ''
     
     return document
 
