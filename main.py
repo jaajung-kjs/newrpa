@@ -434,7 +434,6 @@ class RPA_GUI:
         self.master = master
         self.setup_window()
         self.setup_theme()
-        self.create_widgets()
         
         self.overlay = None
         self.progress_label = None
@@ -442,16 +441,18 @@ class RPA_GUI:
         self.progress_var = StringVar()
         self.progress_var.set("준비 완료")
         
+        self.create_widgets()
+        
     def setup_window(self):
         """윈도우 기본 설정"""
         self.master.title("노트북 보안점검 자동화 도구")
-        self.master.geometry("520x720")
+        self.master.geometry("350x420")
         self.master.resizable(False, False)
         
         # 윈도우를 화면 중앙에 배치
         self.master.update_idletasks()
-        width = 520
-        height = 720
+        width = 350
+        height = 420
         x = (self.master.winfo_screenwidth() // 2) - (width // 2)
         y = (self.master.winfo_screenheight() // 2) - (height // 2)
         self.master.geometry(f'{width}x{height}+{x}+{y}')
@@ -477,95 +478,54 @@ class RPA_GUI:
         
     def create_widgets(self):
         """위젯 생성 및 배치"""
-        # 메인 스크롤 프레임
-        self.main_frame = ctk.CTkScrollableFrame(self.master, width=480, height=680)
-        self.main_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        # 메인 프레임 (스크롤 없이)
+        self.main_frame = ctk.CTkFrame(self.master, fg_color="transparent")
+        self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
         
-        # 헤더 카드
-        header_card = ctk.CTkFrame(self.main_frame, corner_radius=15, fg_color=self.colors['card_bg'])
-        header_card.pack(fill="x", pady=(0, 15))
-        
-        # 타이틀
-        title_label = ctk.CTkLabel(header_card, 
+        # 헤더 (간소화)
+        title_label = ctk.CTkLabel(self.main_frame, 
                                   text="🛡️ 노트북 보안점검 도구", 
-                                  font=ctk.CTkFont(family="Segoe UI Variable", size=24, weight="bold"),
+                                  font=ctk.CTkFont(family="Segoe UI Variable", size=20, weight="bold"),
                                   text_color=self.colors['primary'])
-        title_label.pack(pady=(20, 5))
+        title_label.pack(pady=(0, 10))
         
-        subtitle_label = ctk.CTkLabel(header_card,
-                                      text="자동화된 보안 점검으로 안전한 업무환경을 만드세요",
-                                      font=ctk.CTkFont(family="Segoe UI", size=13),
-                                      text_color=self.colors['text_secondary'])
-        subtitle_label.pack(pady=(0, 20))
-        
-        # 점검 항목 카드
-        check_card = ctk.CTkFrame(self.main_frame, corner_radius=15, fg_color=self.colors['card_bg'])
-        check_card.pack(fill="x", pady=(0, 15))
-        
-        check_title = ctk.CTkLabel(check_card, 
+        # 점검 항목 (간소화)
+        check_title = ctk.CTkLabel(self.main_frame, 
                                   text="📋 점검 항목",
                                   font=ctk.CTkFont(family="Segoe UI Variable", size=16, weight="bold"),
                                   text_color=self.colors['text_primary'])
-        check_title.pack(anchor="w", padx=20, pady=(15, 10))
+        check_title.pack(anchor="w", pady=(0, 5))
         
-        # 점검 항목들을 2열 그리드로 배치
-        items_frame = ctk.CTkFrame(check_card, fg_color="transparent")
-        items_frame.pack(fill="x", padx=20, pady=(0, 20))
+        # 점검 항목들을 간단한 텍스트로 표시
+        items_text = "• 공유폴더/시스템정보  • MAC주소/화면보호기\n• 안티바이러스 상태  • 기타 보안 점검"
+        items_label = ctk.CTkLabel(self.main_frame,
+                                  text=items_text,
+                                  font=ctk.CTkFont(size=12),
+                                  text_color=self.colors['text_secondary'],
+                                  justify="left")
+        items_label.pack(anchor="w", pady=(0, 8))
         
-        check_items = [
-            ("🔍", "공유폴더 삭제 확인"),
-            ("💻", "시스템 정보 수집"),
-            ("🌐", "MAC 주소 확인"),
-            ("🖥️", "화면보호기 설정"),
-            ("📦", "불필요 프로그램 점검"),
-            ("🛡️", "안티바이러스 상태"),
-            ("👁️", "실시간 보안 감시"),
-            ("🖼️", "바탕화면 상태"),
-            ("🔒", "V3 백신 검사"),
-            ("✅", "보안 프로그램 설치 여부")
-        ]
         
-        # 체크박스로 항목 표시 (비활성화 상태로)
-        self.check_vars = []
-        for i, (icon, text) in enumerate(check_items):
-            var = ctk.BooleanVar(value=False)
-            self.check_vars.append(var)
-            
-            item_frame = ctk.CTkFrame(items_frame, fg_color="transparent")
-            item_frame.grid(row=i//2, column=i%2, sticky="ew", padx=5, pady=3)
-            items_frame.grid_columnconfigure(i%2, weight=1)
-            
-            checkbox = ctk.CTkCheckBox(item_frame, 
-                                       text=f"{icon} {text}",
-                                       font=ctk.CTkFont(size=12),
-                                       variable=var,
-                                       state="disabled",
-                                       text_color=self.colors['text_secondary'])
-            checkbox.pack(anchor="w")
-        
-        # 진행 상태 카드
-        progress_card = ctk.CTkFrame(self.main_frame, corner_radius=15, fg_color=self.colors['card_bg'])
-        progress_card.pack(fill="x", pady=(0, 15))
-        
-        progress_title = ctk.CTkLabel(progress_card, 
+        # 진행 상태 (간소화)
+        progress_title = ctk.CTkLabel(self.main_frame, 
                                      text="📊 진행 상태",
                                      font=ctk.CTkFont(family="Segoe UI Variable", size=16, weight="bold"),
                                      text_color=self.colors['text_primary'])
-        progress_title.pack(anchor="w", padx=20, pady=(15, 5))
+        progress_title.pack(anchor="w", pady=(10, 5))
         
-        self.progress_display = ctk.CTkLabel(progress_card, 
+        self.progress_display = ctk.CTkLabel(self.main_frame, 
                                             textvariable=self.progress_var,
                                             font=ctk.CTkFont(size=13),
                                             text_color=self.colors['success'])
-        self.progress_display.pack(anchor="w", padx=20, pady=(0, 10))
+        self.progress_display.pack(anchor="w", pady=(0, 5))
         
         # 프로그레스 바
-        self.progress_bar = ctk.CTkProgressBar(progress_card, 
-                                              width=440,
-                                              height=20,
-                                              corner_radius=10,
+        self.progress_bar = ctk.CTkProgressBar(self.main_frame, 
+                                              width=320,
+                                              height=15,
+                                              corner_radius=8,
                                               progress_color=self.colors['primary'])
-        self.progress_bar.pack(padx=20, pady=(0, 20))
+        self.progress_bar.pack(pady=(0, 10))
         self.progress_bar.set(0)
         
         # 시작 버튼
@@ -573,39 +533,27 @@ class RPA_GUI:
                                          text="🚀 보안점검 시작",
                                          font=ctk.CTkFont(size=16, weight="bold"),
                                          command=self.start_rpa,
-                                         height=45,
+                                         height=40,
                                          corner_radius=10,
                                          fg_color=self.colors['primary'],
                                          hover_color=self.colors['dark'])
-        self.start_button.pack(fill="x", pady=(0, 15))
+        self.start_button.pack(fill="x", pady=(0, 10))
         
-        # 경고 카드
-        warning_card = ctk.CTkFrame(self.main_frame, 
-                                   corner_radius=15, 
-                                   fg_color="#FFF8E7",
-                                   border_width=2,
-                                   border_color=self.colors['warning'])
-        warning_card.pack(fill="x", pady=(0, 15))
-        
-        warning_title = ctk.CTkLabel(warning_card, 
-                                    text="⚠️ 주의사항",
-                                    font=ctk.CTkFont(size=14, weight="bold"),
-                                    text_color="#8B6914")
-        warning_title.pack(anchor="w", padx=20, pady=(15, 5))
-        
-        warning_text = ctk.CTkLabel(warning_card,
-                                   text="• 점검 중에는 컴퓨터를 조작하지 마세요\n• 모든 작업은 자동으로 수행됩니다\n• 완료 후 Word 문서가 생성됩니다",
-                                   font=ctk.CTkFont(size=12),
-                                   text_color="#8B6914",
-                                   justify="left")
-        warning_text.pack(anchor="w", padx=20, pady=(0, 15))
+        # 경고 (간소화)
+        warning_text = "⚠️ 점검 중에는 컴퓨터를 사용하지 마세요."
+        warning_label = ctk.CTkLabel(self.main_frame, 
+                                    text=warning_text,
+                                    font=ctk.CTkFont(size=12),
+                                    text_color=self.colors['warning'],
+                                    wraplength=320)
+        warning_label.pack(pady=(0, 5))
         
         # 푸터
         footer_label = ctk.CTkLabel(self.main_frame,
-                                   text="Version 2.0 | Professional Security Suite",
+                                   text="Version 2.0",
                                    font=ctk.CTkFont(size=11),
                                    text_color=self.colors['text_secondary'])
-        footer_label.pack(pady=(10, 0))
+        footer_label.pack(pady=(3, 0))
     
     def start_rpa(self):
         """RPA 작업 시작"""
